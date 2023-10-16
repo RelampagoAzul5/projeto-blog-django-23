@@ -85,7 +85,16 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-  
+  img {
+    margin: 0 auto;
+  }
+
+/* CodeMirror */
+.CodeMirror{
+  height: auto !important;
+  font-size: var(--fs-smlr);
+}
+
   a {
     color: hsl(var(--clr-primary-base));
     text-decoration: none;
