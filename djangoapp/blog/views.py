@@ -142,7 +142,7 @@ class PageDetailView(DetailView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         ctx = super().get_context_data(**kwargs)
         page = self.get_object()
-        page_title = f'{page.title} - Página'
+        page_title = f'{page.title} - Página' # type:ignore
         ctx.update({
             'page_title': page_title,
         })
@@ -150,22 +150,18 @@ class PageDetailView(DetailView):
     def get_queryset(self) -> QuerySet[Any]:
         return super().get_queryset().filter(is_published=True)
 
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'blog/pages/post.html'
+    context_object_name = 'post'
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        post = self.get_object()
+        post_title = f'{post.title} - Post' # type:ignore
+        ctx.update({
+            'page_title': post_title,
+        })
+        return ctx
+    def get_queryset(self) -> QuerySet[Any]:
+        return super().get_queryset().filter(is_published=True)
 
-def post(request, slug):
-    post_obj = (
-        Post.objects.get_published() # type:ignore
-        .filter(slug=slug)
-        .first()
-    )
-    if post_obj is None:
-        raise Http404
-    page_title = f'{post_obj.title} - Post'
-
-    return render(
-        request,
-        'blog/pages/post.html',
-        {
-            'post': post_obj,
-            'page_title': page_title,
-        }
-    )
