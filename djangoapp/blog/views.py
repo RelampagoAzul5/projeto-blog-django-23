@@ -7,8 +7,8 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from django.views.generic import ListView
 from django.db.models.query import QuerySet
-from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.http import Http404
+from django.shortcuts import render
 
 PER_PAGE = 9
 
@@ -17,7 +17,7 @@ class PostListView(ListView):
     template_name = 'blog/pages/index.html'
     context_object_name = 'posts'
     paginate_by = PER_PAGE
-    queryset = Post.objects.get_published()
+    queryset = Post.objects.get_published() # type:ignore
 
     # def get_queryset(self):
     #     queryset = super().get_queryset()
@@ -33,45 +33,6 @@ class PostListView(ListView):
         )
         return context
 
-# def index(request):
-
-#     posts = Post.objects.get_published()
-#     paginator = Paginator(posts, PER_PAGE)
-#     page_number = request.GET.get("page")
-#     page_obj = paginator.get_page(page_number)
-
-#     return render(
-#         request,
-#         'blog/pages/index.html',
-#         {
-#             'page_obj': page_obj,
-#             'page_title': 'Home',
-#         }
-#     )
-
-
-# def created_by(request, author_pk):
-#     user = User.objects.filter(pk=author_pk).first()
-#     if user is None:
-#         raise Http404()
-
-#     posts = (Post.objects.get_published().filter(created_by__pk=author_pk))
-#     user_full_name = user.username
-#     if user.first_name:
-#         user_full_name = f'{user.first_name} {user.last_name}'
-#     page_title = 'Posts de ' + user_full_name
-#     paginator = Paginator(posts, PER_PAGE)
-#     page_number = request.GET.get("page")
-#     page_obj = paginator.get_page(page_number)
-
-#     return render(
-#         request,
-#         'blog/pages/index.html',
-#         {
-#             'page_obj': page_obj,
-#             'page_title': page_title,
-#         }
-#     )
 
 class CreatedByListView(PostListView):
     def __init__(self, **kwargs: Any) -> None:
@@ -111,24 +72,6 @@ class CreatedByListView(PostListView):
         })
 
         return super().get(request, *args, **kwargs)
-
-def category(request, slug):
-    posts = (Post.objects.get_published().filter(category__slug=slug))
-    paginator = Paginator(posts, PER_PAGE)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-    if len(posts) == 0:
-        raise Http404
-    page_title = f'{page_obj[0].category.name} - Categoria'
-
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': page_obj,
-            'page_title': 'Home',
-        }
-    )
 class CategoryListView(PostListView):
     allow_empty = False
     def get_queryset(self) -> QuerySet[Any]:
@@ -144,31 +87,29 @@ class CategoryListView(PostListView):
         })
         return ctx
 
-
-def tag(request, slug):
-
-    posts = (Post.objects.get_published().filter(tags__slug=slug))
-    paginator = Paginator(posts, PER_PAGE)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-    if len(posts) == 0:
-        raise Http404
-    page_title = f'{page_obj[0].tags.first().name} - Tag'
-
-    return render(
-        request,
-        'blog/pages/index.html',
-        {
-            'page_obj': page_obj,
+class TagListView(PostListView):
+    allow_empty = False
+    def get_queryset(self) -> QuerySet[Any]:
+        return super().get_queryset().filter(
+            tags__slug=self.kwargs.get('slug')
+        )
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        page_title = (
+            f'{self.object_list[0].tags.first().name}'  # type: ignore
+            ' - Tag - '
+        )
+        ctx.update({
             'page_title': page_title,
-        }
-    )
+
+             })
+        return ctx
 
 
 def search(request):
     search_value = request.GET.get('search', '').strip()
     posts = (
-        Post.objects.get_published()
+        Post.objects.get_published() # type:ignore
         .filter(
             Q(title__icontains=search_value) |
             Q(excerpt__icontains=search_value) |
@@ -210,7 +151,7 @@ def page(request, slug):
 
 def post(request, slug):
     post_obj = (
-        Post.objects.get_published()
+        Post.objects.get_published() # type:ignore
         .filter(slug=slug)
         .first()
     )
